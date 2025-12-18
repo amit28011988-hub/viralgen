@@ -33,7 +33,7 @@ export default function Home() {
           setBottomText("Read full story in comments");
         } else {
           setTopText(title);
-          setBottomText(`seen on r/${json.subreddit || 'internet'}`);
+          setBottomText(json.author || 'Keep pushing forward');
         }
       }
     } catch (e) {
