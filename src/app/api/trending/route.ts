@@ -1,49 +1,42 @@
 import { NextResponse } from 'next/server';
 
+// Motivational quotes database
+const quotes = [
+    { top: "Success is not final", bottom: "Failure is not fatal: It is the courage to continue that counts" },
+    { top: "The only way to do great work", bottom: "Is to love what you do" },
+    { top: "Believe you can", bottom: "And you're halfway there" },
+    { top: "Your limitation—it's only your imagination", bottom: "Push yourself, because no one else is going to do it for you" },
+    { top: "Great things never come from comfort zones", bottom: "Dream it. Wish it. Do it." },
+    { top: "Success doesn't just find you", bottom: "You have to go out and get it" },
+    { top: "The harder you work for something", bottom: "The greater you'll feel when you achieve it" },
+    { top: "Don't stop when you're tired", bottom: "Stop when you're done" },
+    { top: "Wake up with determination", bottom: "Go to bed with satisfaction" },
+    { top: "Do something today", bottom: "That your future self will thank you for" }
+];
+
 export async function GET() {
     try {
-        // Fetch from multiple subreddits to get variety: GetMotivated, pics, memes
-        const subreddits = ['GetMotivated', 'pics', 'memes', 'wholesomememes'];
-        const subreddit = subreddits[Math.floor(Math.random() * subreddits.length)];
+        // Use Unsplash for random images (no API key needed for basic usage)
+        const topics = ['nature', 'city', 'people', 'technology', 'business'];
+        const topic = topics[Math.floor(Math.random() * topics.length)];
 
-        // Fetch top posts from the day
-        const res = await fetch(`https://www.reddit.com/r/${subreddit}/top/.json?limit=25&t=day`, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            },
-            next: { revalidate: 60 } // Cache for 60 seconds
+        const res = await fetch(`https://source.unsplash.com/800x600/?${topic}`, {
+            redirect: 'follow'
         });
 
         if (!res.ok) {
-            console.error("Reddit API Error:", res.status, res.statusText);
-            return NextResponse.json({ error: 'Failed to fetch from Reddit' }, { status: 500 });
+            console.error("Unsplash API Error:", res.status);
+            return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 });
         }
 
-        const data = await res.json();
-
-        // Filter for valid image posts (not videos, not external links usually)
-        const posts = data.data.children
-            .map((child: any) => child.data)
-            .filter((post: any) => {
-                return (
-                    post.url &&
-                    post.url.match(/\.(jpg|jpeg|png)$/i) &&
-                    !post.is_video &&
-                    !post.over_18
-                );
-            });
-
-        if (posts.length === 0) {
-            return NextResponse.json({ error: 'No images found' }, { status: 404 });
-        }
-
-        const randomPost = posts[Math.floor(Math.random() * posts.length)];
+        // Get the random quote
+        const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
         return NextResponse.json({
-            imageUrl: randomPost.url,
-            title: randomPost.title, // Use title as the "Caption"
-            subreddit: subreddit,
-            author: randomPost.author
+            imageUrl: res.url, // Unsplash redirects to actual image URL
+            title: quote.top,
+            subreddit: topic,
+            author: quote.bottom
         });
     } catch (error) {
         console.error("API Error:", error);
