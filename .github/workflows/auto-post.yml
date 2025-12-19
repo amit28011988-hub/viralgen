@@ -2,8 +2,12 @@ name: Auto Post to Facebook
 
 on:
   schedule:
-    # Runs at 9 AM IST (3:30 AM UTC) every day
-    - cron: '30 3 * * *'
+    # Post 5 times daily at strategic hours (IST time)
+    - cron: '30 3 * * *'   # 9:00 AM IST - Morning motivation
+    - cron: '30 7 * * *'   # 1:00 PM IST - Afternoon boost
+    - cron: '30 11 * * *'  # 5:00 PM IST - Evening inspiration
+    - cron: '30 15 * * *'  # 9:00 PM IST - Night wind-down
+    - cron: '30 17 * * *'  # 11:00 PM IST - Late night
   workflow_dispatch: # Allows manual trigger for testing
 
 jobs:
