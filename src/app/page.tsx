@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MemeCanvas } from '@/components/MemeCanvas';
 
 export default function Home() {
@@ -8,16 +8,45 @@ export default function Home() {
   const [data, setData] = useState<{ imageUrl: string, title: string, subreddit?: string } | null>(null);
   const [topText, setTopText] = useState('');
   const [bottomText, setBottomText] = useState('');
+  const [shownPosts, setShownPosts] = useState<Set<string>>(new Set());
+
+  // Load shown posts from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('shownPosts');
+    if (stored) {
+      setShownPosts(new Set(JSON.parse(stored)));
+    }
+  }, []);
 
   const fetchTrending = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/trending');
-      if (!res.ok) throw new Error("API Error");
-      const json = await res.json();
+      // Keep fetching until we get a post we haven't shown yet
+      let attempts = 0;
+      let json;
+
+      do {
+        const res = await fetch('/api/trending');
+        if (!res.ok) throw new Error("API Error");
+        json = await res.json();
+        attempts++;
+
+        // If we've shown all 50 posts, reset the tracking
+        if (shownPosts.size >= 50 || attempts > 100) {
+          setShownPosts(new Set());
+          localStorage.removeItem('shownPosts');
+          break;
+        }
+      } while (shownPosts.has(json.imageUrl) && attempts < 100);
 
       if (json.imageUrl) {
         setData(json);
+
+        // Track this post as shown
+        const newShownPosts = new Set(shownPosts);
+        newShownPosts.add(json.imageUrl);
+        setShownPosts(newShownPosts);
+        localStorage.setItem('shownPosts', JSON.stringify(Array.from(newShownPosts)));
 
         const title = json.title || "Trending Topic";
 
